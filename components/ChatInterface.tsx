@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatSession, Message, Role, ModelType, GeminiResponse } from '../types';
 import { generateResponse, analyzeImage } from '../services/gemini';
@@ -51,7 +50,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
       let aiResponse: GeminiResponse;
       if (currentImg && !currentInput) {
         const analysis = await analyzeImage(currentImg, "What is in this image?");
-        aiResponse = { text: analysis };
+        aiResponse = { text: analysis, groundingSources: [] };
       } else {
         aiResponse = await generateResponse(currentInput, newMessages, selectedModel, useSearch);
       }
@@ -63,7 +62,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
           ...(aiResponse.text ? [{ text: aiResponse.text }] : []),
           ...(aiResponse.imageUrl ? [{ image: aiResponse.imageUrl, isImagePrompt: true }] : [])
         ],
-        groundingSources: aiResponse.groundingSources,
+        groundingSources: aiResponse.groundingSources || [],
         timestamp: Date.now()
       };
 

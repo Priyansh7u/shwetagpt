@@ -1,12 +1,5 @@
-
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../types";
-
-const getApiKey = () => {
-  // Try to get key from process.env (injected by Vite or external environment)
-  const key = process.env.API_KEY;
-  return key || '';
-};
 
 export const generateResponse = async (
   prompt: string,
@@ -14,10 +7,9 @@ export const generateResponse = async (
   model: ModelType = ModelType.FLASH,
   useSearch: boolean = false
 ): Promise<GeminiResponse> => {
-  const apiKey = getApiKey();
-  const ai = new GoogleGenAI({ apiKey });
+  // Always use process.env.API_KEY as per instructions
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
-  // If it's an image generation request
   const lowercasePrompt = prompt.toLowerCase();
   if (lowercasePrompt.includes("generate an image of") || lowercasePrompt.includes("create an image")) {
     return await generateImage(prompt);
@@ -52,31 +44,32 @@ export const generateResponse = async (
       config,
     });
 
-    if (!response || !response.text) {
-      throw new Error("Empty response from Gemini API");
-    }
+    const text = response.text || "";
+    const groundingSources: GroundingSource[] = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => {
+      if (chunk.web) {
+        return {
+          title: chunk.web.title || chunk.web.uri || "Source",
+          uri: chunk.web.uri
+        };
+      }
+      return null;
+    }).filter((s: any): s is GroundingSource => s !== null && !!s.uri) || [];
 
-    const text = response.text;
-    const groundingSources: GroundingSource[] = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => ({
-      title: chunk.web?.title || chunk.web?.uri || "Source",
-      uri: chunk.web?.uri
-    })).filter((s: any) => s.uri) || [];
-
-    return { text, groundingSources };
+    return { 
+      text, 
+      groundingSources,
+      imageUrl: undefined 
+    };
   } catch (error: any) {
     console.error("Gemini API Error Detail:", error);
-    if (error.message?.includes("entity was not found")) {
-      console.warn("Requested entity was not found. This might be a model availability or API key issue.");
-    }
     throw error;
   }
 };
 
 export const generateImage = async (prompt: string): Promise<GeminiResponse> => {
-  const apiKey = getApiKey();
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   try {
-    const response = await ai.models.generateContent({
+    const response: GenerateContentResponse = await ai.models.generateContent({
       model: ModelType.IMAGE,
       contents: {
         parts: [{ text: prompt }]
@@ -88,7 +81,7 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
       }
     });
 
-    let imageUrl = "";
+    let imageUrl: string | undefined = undefined;
     let text = "";
 
     const parts = response.candidates?.[0]?.content?.parts || [];
@@ -100,11 +93,11 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
       }
     }
 
-    if (!imageUrl && !text) {
-      throw new Error("No image or text returned from image generation");
-    }
-
-    return { text: text || "Here is your generated image:", imageUrl };
+    return { 
+      text: text || "Here is your generated image:", 
+      imageUrl,
+      groundingSources: [] 
+    };
   } catch (error) {
     console.error("Image Generation Error:", error);
     throw error;
@@ -112,10 +105,9 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
 };
 
 export const analyzeImage = async (imageB64: string, prompt: string): Promise<string> => {
-  const apiKey = getApiKey();
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   try {
-    const response = await ai.models.generateContent({
+    const response: GenerateContentResponse = await ai.models.generateContent({
       model: ModelType.FLASH,
       contents: {
         parts: [
