@@ -1,0 +1,8 @@
+{
+  "name": "ShwetaGPT",
+  "description": "A feature-rich AI assistant built with React and the Gemini API.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
