@@ -7,7 +7,6 @@ export const generateResponse = async (
   model: ModelType = ModelType.FLASH,
   useSearch: boolean = false
 ): Promise<GeminiResponse> => {
-  // Always use process.env.API_KEY as per instructions
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
   const lowercasePrompt = prompt.toLowerCase();

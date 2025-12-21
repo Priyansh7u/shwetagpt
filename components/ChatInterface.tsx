@@ -50,7 +50,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
       let aiResponse: GeminiResponse;
       if (currentImg && !currentInput) {
         const analysis = await analyzeImage(currentImg, "What is in this image?");
-        aiResponse = { text: analysis, groundingSources: [] };
+        aiResponse = { text: analysis, groundingSources: [], imageUrl: undefined };
       } else {
         aiResponse = await generateResponse(currentInput, newMessages, selectedModel, useSearch);
       }
