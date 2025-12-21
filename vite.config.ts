@@ -5,8 +5,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
-    // Inject the API_KEY from the environment at build time.
-    // IMPORTANT: You must set the API_KEY environment variable in Vercel/CI.
+    // This allows the client-side code to access process.env.API_KEY
+    // Make sure to set API_KEY in your Vercel project settings.
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY),
   },
   server: {

@@ -67,12 +67,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
       };
 
       updateMessages([...newMessages, assistantMessage]);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      let errorText = "Sorry, I encountered an error. Please try again later.";
+      
+      if (err.message === "API_KEY_MISSING") {
+        errorText = "API Key is missing. Please ensure you have set the API_KEY environment variable in your Vercel project settings.";
+      }
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: Role.ASSISTANT,
-        parts: [{ text: "Sorry, I encountered an error. Please check your API key and try again." }],
+        parts: [{ text: errorText }],
         timestamp: Date.now()
       };
       updateMessages([...newMessages, errorMessage]);

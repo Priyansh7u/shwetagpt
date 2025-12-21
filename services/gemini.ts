@@ -1,11 +1,7 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../types";
 
-/**
- * Retrieves the API key from the environment.
- * The Vite 'define' config ensures this is replaced at build time.
- */
-const getApiKey = () => process.env.API_KEY || '';
+const getApiKey = () => process.env.API_KEY;
 
 export const generateResponse = async (
   prompt: string,
@@ -15,8 +11,7 @@ export const generateResponse = async (
 ): Promise<GeminiResponse> => {
   const apiKey = getApiKey();
   if (!apiKey) {
-    console.error("CRITICAL: API_KEY is not defined in the environment variables.");
-    throw new Error("API Key is missing. Please configure your Vercel Environment Variables.");
+    throw new Error("API_KEY_MISSING");
   }
   
   const ai = new GoogleGenAI({ apiKey });
@@ -61,10 +56,8 @@ export const generateResponse = async (
       config,
     });
 
-    // Access .text property (getter)
     const text = response.text || "";
     
-    // Extract grounding sources if available
     const groundingSources: GroundingSource[] = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => {
       if (chunk.web) {
         return {
@@ -88,6 +81,8 @@ export const generateResponse = async (
 
 export const generateImage = async (prompt: string): Promise<GeminiResponse> => {
   const apiKey = getApiKey();
+  if (!apiKey) throw new Error("API_KEY_MISSING");
+  
   const ai = new GoogleGenAI({ apiKey });
   
   try {
@@ -128,6 +123,8 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
 
 export const analyzeImage = async (imageB64: string, prompt: string): Promise<string> => {
   const apiKey = getApiKey();
+  if (!apiKey) throw new Error("API_KEY_MISSING");
+
   const ai = new GoogleGenAI({ apiKey });
   
   try {
