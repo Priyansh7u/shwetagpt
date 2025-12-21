@@ -1,14 +1,16 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../types";
 
+const getApiKey = () => process.env.API_KEY || '';
+
 export const generateResponse = async (
   prompt: string,
   history: Message[],
   model: ModelType = ModelType.FLASH,
   useSearch: boolean = false
 ): Promise<GeminiResponse> => {
-  // Use a new instance for every call to ensure the latest key is used
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  const apiKey = getApiKey();
+  const ai = new GoogleGenAI({ apiKey });
 
   const lowercasePrompt = prompt.toLowerCase();
   if (lowercasePrompt.includes("generate an image of") || lowercasePrompt.includes("create an image")) {
@@ -19,11 +21,15 @@ export const generateResponse = async (
     role: msg.role === Role.USER ? "user" : "model",
     parts: msg.parts.map(p => {
       if (p.text) return { text: p.text };
-      if (p.image) return { inlineData: { data: p.image.split(',')[1], mimeType: 'image/png' } };
+      if (p.image) {
+        const base64Data = p.image.includes(',') ? p.image.split(',')[1] : p.image;
+        return { inlineData: { data: base64Data, mimeType: 'image/png' } };
+      }
       return { text: "" };
     })
   }));
 
+  // Add current user prompt
   contents.push({
     role: "user",
     parts: [{ text: prompt }]
@@ -59,15 +65,16 @@ export const generateResponse = async (
       text, 
       groundingSources,
       imageUrl: undefined 
-    };
+    } as GeminiResponse;
   } catch (error: any) {
-    console.error("Gemini API Error Detail:", error);
+    console.error("Gemini API Error:", error);
     throw error;
   }
 };
 
 export const generateImage = async (prompt: string): Promise<GeminiResponse> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  const apiKey = getApiKey();
+  const ai = new GoogleGenAI({ apiKey });
   try {
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: ModelType.IMAGE,
@@ -97,7 +104,7 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
       text: text || "Here is your generated image:", 
       imageUrl,
       groundingSources: [] 
-    };
+    } as GeminiResponse;
   } catch (error) {
     console.error("Image Generation Error:", error);
     throw error;
@@ -105,13 +112,15 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
 };
 
 export const analyzeImage = async (imageB64: string, prompt: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  const apiKey = getApiKey();
+  const ai = new GoogleGenAI({ apiKey });
   try {
+    const base64Data = imageB64.includes(',') ? imageB64.split(',')[1] : imageB64;
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: ModelType.FLASH,
       contents: {
         parts: [
-          { inlineData: { data: imageB64.split(',')[1], mimeType: 'image/png' } },
+          { inlineData: { data: base64Data, mimeType: 'image/png' } },
           { text: prompt || "What is in this image?" }
         ]
       }
