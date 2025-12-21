@@ -2,16 +2,24 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../types";
 
+const getApiKey = () => {
+  // Try to get key from process.env (injected by Vite or external environment)
+  const key = process.env.API_KEY;
+  return key || '';
+};
+
 export const generateResponse = async (
   prompt: string,
   history: Message[],
   model: ModelType = ModelType.FLASH,
   useSearch: boolean = false
 ): Promise<GeminiResponse> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const apiKey = getApiKey();
+  const ai = new GoogleGenAI({ apiKey });
 
   // If it's an image generation request
-  if (prompt.toLowerCase().includes("generate an image of") || prompt.toLowerCase().includes("create an image")) {
+  const lowercasePrompt = prompt.toLowerCase();
+  if (lowercasePrompt.includes("generate an image of") || lowercasePrompt.includes("create an image")) {
     return await generateImage(prompt);
   }
 
@@ -44,21 +52,29 @@ export const generateResponse = async (
       config,
     });
 
-    const text = response.text || "";
+    if (!response || !response.text) {
+      throw new Error("Empty response from Gemini API");
+    }
+
+    const text = response.text;
     const groundingSources: GroundingSource[] = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => ({
       title: chunk.web?.title || chunk.web?.uri || "Source",
       uri: chunk.web?.uri
     })).filter((s: any) => s.uri) || [];
 
     return { text, groundingSources };
-  } catch (error) {
-    console.error("Gemini API Error:", error);
+  } catch (error: any) {
+    console.error("Gemini API Error Detail:", error);
+    if (error.message?.includes("entity was not found")) {
+      console.warn("Requested entity was not found. This might be a model availability or API key issue.");
+    }
     throw error;
   }
 };
 
 export const generateImage = async (prompt: string): Promise<GeminiResponse> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const apiKey = getApiKey();
+  const ai = new GoogleGenAI({ apiKey });
   try {
     const response = await ai.models.generateContent({
       model: ModelType.IMAGE,
@@ -75,12 +91,17 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
     let imageUrl = "";
     let text = "";
 
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
+    const parts = response.candidates?.[0]?.content?.parts || [];
+    for (const part of parts) {
       if (part.inlineData) {
         imageUrl = `data:image/png;base64,${part.inlineData.data}`;
       } else if (part.text) {
         text += part.text;
       }
+    }
+
+    if (!imageUrl && !text) {
+      throw new Error("No image or text returned from image generation");
     }
 
     return { text: text || "Here is your generated image:", imageUrl };
@@ -91,7 +112,8 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
 };
 
 export const analyzeImage = async (imageB64: string, prompt: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const apiKey = getApiKey();
+  const ai = new GoogleGenAI({ apiKey });
   try {
     const response = await ai.models.generateContent({
       model: ModelType.FLASH,
@@ -102,7 +124,7 @@ export const analyzeImage = async (imageB64: string, prompt: string): Promise<st
         ]
       }
     });
-    return response.text || "";
+    return response.text || "I couldn't analyze the image.";
   } catch (error) {
     console.error("Analysis Error:", error);
     throw error;
