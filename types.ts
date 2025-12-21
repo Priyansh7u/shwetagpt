@@ -35,3 +35,9 @@ export interface ChatSession {
   messages: Message[];
   createdAt: number;
 }
+
+export interface GeminiResponse {
+  text?: string;
+  imageUrl?: string;
+  groundingSources?: GroundingSource[];
+}

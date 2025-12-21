@@ -1,16 +1,16 @@
 
-import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
-import { ModelType, Message, Role } from "../types";
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../types";
 
 export const generateResponse = async (
   prompt: string,
   history: Message[],
   model: ModelType = ModelType.FLASH,
   useSearch: boolean = false
-) => {
-  // If it's an image generation request (simplified logic)
+): Promise<GeminiResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+
+  // If it's an image generation request
   if (prompt.toLowerCase().includes("generate an image of") || prompt.toLowerCase().includes("create an image")) {
     return await generateImage(prompt);
   }
@@ -24,7 +24,6 @@ export const generateResponse = async (
     })
   }));
 
-  // Add the current prompt
   contents.push({
     role: "user",
     parts: [{ text: prompt }]
@@ -46,7 +45,7 @@ export const generateResponse = async (
     });
 
     const text = response.text || "";
-    const groundingSources = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => ({
+    const groundingSources: GroundingSource[] = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => ({
       title: chunk.web?.title || chunk.web?.uri || "Source",
       uri: chunk.web?.uri
     })).filter((s: any) => s.uri) || [];
@@ -58,7 +57,8 @@ export const generateResponse = async (
   }
 };
 
-export const generateImage = async (prompt: string) => {
+export const generateImage = async (prompt: string): Promise<GeminiResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
   try {
     const response = await ai.models.generateContent({
       model: ModelType.IMAGE,
@@ -90,7 +90,8 @@ export const generateImage = async (prompt: string) => {
   }
 };
 
-export const analyzeImage = async (imageB64: string, prompt: string) => {
+export const analyzeImage = async (imageB64: string, prompt: string): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
   try {
     const response = await ai.models.generateContent({
       model: ModelType.FLASH,
@@ -101,7 +102,7 @@ export const analyzeImage = async (imageB64: string, prompt: string) => {
         ]
       }
     });
-    return response.text;
+    return response.text || "";
   } catch (error) {
     console.error("Analysis Error:", error);
     throw error;
