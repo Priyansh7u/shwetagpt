@@ -5,10 +5,15 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
-    // Inject the hackathon API key into the browser environment
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || 'AIzaSyAiQZjkyvCjZJSYASP9Bf9u2kXV-SrZwOo'),
+    // Inject the API_KEY from the environment at build time.
+    // IMPORTANT: You must set the API_KEY environment variable in Vercel/CI.
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY),
   },
   server: {
     port: 3000,
   },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+  }
 });

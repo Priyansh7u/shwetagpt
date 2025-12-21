@@ -1,6 +1,10 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../types";
 
+/**
+ * Retrieves the API key from the environment.
+ * The Vite 'define' config ensures this is replaced at build time.
+ */
 const getApiKey = () => process.env.API_KEY || '';
 
 export const generateResponse = async (
@@ -10,13 +14,20 @@ export const generateResponse = async (
   useSearch: boolean = false
 ): Promise<GeminiResponse> => {
   const apiKey = getApiKey();
+  if (!apiKey) {
+    console.error("CRITICAL: API_KEY is not defined in the environment variables.");
+    throw new Error("API Key is missing. Please configure your Vercel Environment Variables.");
+  }
+  
   const ai = new GoogleGenAI({ apiKey });
 
+  // Handle implicit image generation requests
   const lowercasePrompt = prompt.toLowerCase();
   if (lowercasePrompt.includes("generate an image of") || lowercasePrompt.includes("create an image")) {
     return await generateImage(prompt);
   }
 
+  // Format history for the API
   const contents = history.map(msg => ({
     role: msg.role === Role.USER ? "user" : "model",
     parts: msg.parts.map(p => {
@@ -29,7 +40,7 @@ export const generateResponse = async (
     })
   }));
 
-  // Add current user prompt
+  // Add the current prompt
   contents.push({
     role: "user",
     parts: [{ text: prompt }]
@@ -50,7 +61,10 @@ export const generateResponse = async (
       config,
     });
 
+    // Access .text property (getter)
     const text = response.text || "";
+    
+    // Extract grounding sources if available
     const groundingSources: GroundingSource[] = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => {
       if (chunk.web) {
         return {
@@ -65,9 +79,9 @@ export const generateResponse = async (
       text, 
       groundingSources,
       imageUrl: undefined 
-    } as GeminiResponse;
+    };
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
+    console.error("Gemini API Error Detail:", error);
     throw error;
   }
 };
@@ -75,6 +89,7 @@ export const generateResponse = async (
 export const generateImage = async (prompt: string): Promise<GeminiResponse> => {
   const apiKey = getApiKey();
   const ai = new GoogleGenAI({ apiKey });
+  
   try {
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: ModelType.IMAGE,
@@ -104,7 +119,7 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
       text: text || "Here is your generated image:", 
       imageUrl,
       groundingSources: [] 
-    } as GeminiResponse;
+    };
   } catch (error) {
     console.error("Image Generation Error:", error);
     throw error;
@@ -114,6 +129,7 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
 export const analyzeImage = async (imageB64: string, prompt: string): Promise<string> => {
   const apiKey = getApiKey();
   const ai = new GoogleGenAI({ apiKey });
+  
   try {
     const base64Data = imageB64.includes(',') ? imageB64.split(',')[1] : imageB64;
     const response: GenerateContentResponse = await ai.models.generateContent({
