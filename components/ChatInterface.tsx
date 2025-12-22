@@ -72,7 +72,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
       let errorText = "An error occurred while connecting to Gemini. Please check your connection.";
       
       if (err.message === "API_KEY_MISSING") {
-        errorText = "Gemini API Key not found in this build. \n\n1. Go to Vercel Settings > Environment Variables and ensure 'API_KEY' is added. \n2. IMPORTANT: You must click 'Redeploy' on your latest Vercel deployment to apply new variables to the frontend.";
+        errorText = "❌ API KEY ERROR:\n\nIn your Vercel screenshot, you named the variable 'hackathon'. The code requires the name to be exactly 'API_KEY'.\n\n1. Go to Vercel Settings > Environment Variables.\n2. Edit 'hackathon' and change the Name to 'API_KEY'.\n3. Go to the 'Deployments' tab and click 'Redeploy' on your latest build.";
       }
 
       const errorMessage: Message = {
@@ -114,7 +114,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
         {session.messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center space-y-8 mt-20">
             <h2 className="text-4xl md:text-5xl font-medium bg-gradient-to-r from-blue-400 via-purple-500 to-red-400 bg-clip-text text-transparent text-center">
-              Gemini Hackathon Project
+              ShwetaGPT
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-5xl">
               {[

@@ -1,11 +1,20 @@
+
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../types";
 
 /**
  * Strictly utilizes process.env.API_KEY as injected by the build system.
- * This ensures keys are never hardcoded and remain secure in public deployments.
  */
 const getApiKey = () => process.env.API_KEY;
+
+const SYSTEM_INSTRUCTION = `You are ShwetaGPT, a highly intelligent, versatile, and friendly AI assistant. 
+Your goal is to provide accurate, concise, and helpful information. 
+- Be professional yet approachable.
+- If asked for code, provide clean, modern, and documented snippets.
+- When generating images, be creative and descriptive.
+- Always use Markdown for structure (bolding, lists, code blocks).
+- If you don't know something, be honest.
+- Avoid being overly repetitive or lecturing the user.`;
 
 export const generateResponse = async (
   prompt: string,
@@ -18,13 +27,11 @@ export const generateResponse = async (
   
   const ai = new GoogleGenAI({ apiKey });
 
-  // Intelligent redirection for image generation requests
   const lowercasePrompt = prompt.toLowerCase();
-  if (lowercasePrompt.includes("generate an image of") || lowercasePrompt.includes("create an image")) {
+  if (lowercasePrompt.startsWith("generate an image") || lowercasePrompt.startsWith("create an image") || lowercasePrompt.startsWith("draw")) {
     return await generateImage(prompt);
   }
 
-  // Map application history to Gemini SDK format
   const contents = history.map(msg => ({
     role: msg.role === Role.USER ? "user" : "model",
     parts: msg.parts.map(p => {
@@ -37,14 +44,16 @@ export const generateResponse = async (
     })
   }));
 
-  // Append current prompt
   contents.push({
     role: "user",
     parts: [{ text: prompt }]
   });
 
   const config: any = {
-    temperature: 0.7,
+    temperature: 0.8,
+    topP: 0.95,
+    topK: 40,
+    systemInstruction: SYSTEM_INSTRUCTION,
   };
 
   if (useSearch) {
@@ -91,7 +100,7 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: ModelType.IMAGE,
       contents: {
-        parts: [{ text: prompt }]
+        parts: [{ text: `Generate a high-quality, professional image based on this request: ${prompt}` }]
       },
       config: {
         imageConfig: {
@@ -113,7 +122,7 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
     }
 
     return { 
-      text: text || "Image successfully generated:", 
+      text: text || "Here is the image I generated for you:", 
       imageUrl,
       groundingSources: [] 
     };
@@ -136,8 +145,11 @@ export const analyzeImage = async (imageB64: string, prompt: string): Promise<st
       contents: {
         parts: [
           { inlineData: { data: base64Data, mimeType: 'image/png' } },
-          { text: prompt || "Analyze this image in detail." }
+          { text: prompt || "Please look at this image and describe it with insight and detail." }
         ]
+      },
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION
       }
     });
     return response.text || "Unable to analyze the image.";

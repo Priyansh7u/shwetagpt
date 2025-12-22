@@ -6,6 +6,59 @@ interface ChatMessageProps {
   message: Message;
 }
 
+const formatText = (text: string) => {
+  if (!text) return null;
+
+  // Split by code blocks first
+  const parts = text.split(/(```[\s\S]*?```)/g);
+
+  return parts.map((part, index) => {
+    if (part.startsWith('```')) {
+      const codeMatch = part.match(/```(\w*)\n?([\s\S]*?)```/);
+      const language = codeMatch?.[1] || '';
+      const code = codeMatch?.[2] || part.slice(3, -3);
+      return (
+        <div key={index} className="my-4 rounded-lg overflow-hidden border border-[#333537] bg-[#0d0d0d]">
+          {language && (
+            <div className="bg-[#282a2c] px-4 py-1.5 text-[10px] uppercase font-bold text-[#8e918f] border-b border-[#333537]">
+              {language}
+            </div>
+          )}
+          <pre className="p-4 overflow-x-auto text-sm font-mono text-blue-300">
+            <code>{code.trim()}</code>
+          </pre>
+        </div>
+      );
+    }
+
+    // Process inline formatting (bolding, lists)
+    let formatted = part;
+    
+    // Process bolding
+    const lines = formatted.split('\n').map((line, lIdx) => {
+      // Basic bolding **text**
+      const segments = line.split(/(\*\*.*?\*\*)/g).map((seg, sIdx) => {
+        if (seg.startsWith('**') && seg.endsWith('**')) {
+          return <strong key={sIdx} className="text-white font-bold">{seg.slice(2, -2)}</strong>;
+        }
+        return seg;
+      });
+
+      // Simple List Check
+      if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+        return <div key={lIdx} className="flex gap-2 ml-2 my-1">
+          <span className="text-blue-400">•</span>
+          <span>{segments}</span>
+        </div>;
+      }
+
+      return <p key={lIdx} className="min-h-[1.5rem]">{segments}</p>;
+    });
+
+    return <div key={index}>{lines}</div>;
+  });
+};
+
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const isUser = message.role === Role.USER;
 
@@ -35,20 +88,23 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             )}
             {part.text && (
               <div 
-                className={`prose prose-invert max-w-none text-base leading-relaxed ${
-                  isUser ? 'bg-[#282a2c] text-[#e3e3e3] p-4 rounded-2xl rounded-tr-none' : 'text-[#e3e3e3]'
+                className={`max-w-none text-[15px] leading-relaxed tracking-wide ${
+                  isUser ? 'bg-[#2f2f2f] text-[#e3e3e3] p-4 rounded-2xl rounded-tr-none' : 'text-[#e3e3e3] space-y-1'
                 }`}
               >
-                {/* Simplified markdown-like rendering */}
-                <p className="whitespace-pre-wrap">{part.text}</p>
+                {formatText(part.text)}
               </div>
             )}
           </React.Fragment>
         ))}
 
         {!isUser && message.groundingSources && message.groundingSources.length > 0 && (
-          <div className="mt-4 w-full">
-            <p className="text-xs font-semibold text-[#c4c7c5] mb-2">Sources:</p>
+          <div className="mt-6 w-full">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px bg-[#333537] flex-1"></div>
+              <span className="text-[10px] font-bold text-[#8e918f] uppercase tracking-widest px-2">Grounding Sources</span>
+              <div className="h-px bg-[#333537] flex-1"></div>
+            </div>
             <div className="flex flex-wrap gap-2">
               {message.groundingSources.map((source, idx) => (
                 <a 
@@ -56,10 +112,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                   href={source.uri}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-[#282a2c] hover:bg-[#333537] px-3 py-1.5 rounded-full text-[11px] text-[#448aff] border border-[#333537] transition-all flex items-center gap-1"
+                  className="bg-[#1e1f20] hover:bg-[#282a2c] px-4 py-2 rounded-xl text-[11px] text-[#448aff] border border-[#333537] transition-all flex items-center gap-2 shadow-sm"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
-                  {source.title}
+                  <span className="truncate max-w-[150px]">{source.title}</span>
                 </a>
               ))}
             </div>
@@ -68,10 +124,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
 
         {!isUser && (
           <div className="flex items-center gap-1 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button className="p-2 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
-            <button className="p-2 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg></button>
-            <button className="p-2 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg></button>
-            <button className="p-2 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+            <button className="p-2 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+            <button className="p-2 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg></button>
+            <button className="p-2 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg></button>
           </div>
         )}
       </div>
