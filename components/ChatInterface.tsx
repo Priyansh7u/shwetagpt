@@ -69,10 +69,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
       updateMessages([...newMessages, assistantMessage]);
     } catch (err: any) {
       console.error(err);
-      let errorText = "An error occurred while connecting to Gemini. Please check your connection.";
+      let errorText = "Something went wrong connecting to Shweta GPT. Please try again in a moment.";
       
       if (err.message === "API_KEY_MISSING") {
-        errorText = "❌ API KEY ERROR:\n\nIn your Vercel screenshot, you named the variable 'hackathon'. The code requires the name to be exactly 'API_KEY'.\n\n1. Go to Vercel Settings > Environment Variables.\n2. Edit 'hackathon' and change the Name to 'API_KEY'.\n3. Go to the 'Deployments' tab and click 'Redeploy' on your latest build.";
+        errorText = "❌ SHWETA GPT SETUP ERROR:\n\nIn your Vercel screenshot, you named the variable 'hackathon'. You MUST rename it to exactly 'API_KEY' for Shweta GPT to work.\n\n1. Go to Vercel Settings > Environment Variables.\n2. Edit 'hackathon' and change the Name to 'API_KEY'.\n3. Go to the 'Deployments' tab and click 'Redeploy'.";
       }
 
       const errorMessage: Message = {
@@ -114,14 +114,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
         {session.messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center space-y-8 mt-20">
             <h2 className="text-4xl md:text-5xl font-medium bg-gradient-to-r from-blue-400 via-purple-500 to-red-400 bg-clip-text text-transparent text-center">
-              ShwetaGPT
+              Shweta GPT
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-5xl">
               {[
-                { title: "Debug Code", desc: "Help me find the bug in this React component", icon: "💻" },
-                { title: "Generate Image", desc: "Create an image of a neon cyberpunk city", icon: "🎨" },
-                { title: "Analyze Docs", desc: "Summarize the key points of this documentation", icon: "📚" },
-                { title: "Logic Puzzle", desc: "Solve this complex reasoning problem", icon: "🧩" }
+                { title: "Smart Code", desc: "Build me a clean React login form", icon: "💻" },
+                { title: "Art Style", desc: "Draw a futuristic landscape in oil paint style", icon: "🎨" },
+                { title: "Research", desc: "What are the latest breakthroughs in fusion energy?", icon: "⚛️" },
+                { title: "Creative", desc: "Write a short story about a time-traveling chef", icon: "✍️" }
               ].map((card, i) => (
                 <button 
                   key={i}
@@ -141,7 +141,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
           ))
         )}
         {isLoading && (
-          <div className="flex gap-4 animate-pulse">
+          <div className="flex gap-4 animate-pulse px-4 md:px-0">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-400 to-purple-600 shrink-0" />
             <div className="space-y-2 flex-1 max-w-[80%]">
               <div className="h-4 bg-[#282a2c] rounded w-[90%]" />
@@ -172,7 +172,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
               <label className="cursor-pointer p-2 hover:bg-[#282a2c] rounded-full transition-colors group relative">
                 <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#c4c7c5]"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4m4-5l5 5 5-5m-5 5V3"/></svg>
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#282a2c] text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">Upload Image</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#282a2c] text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">Image Input</span>
               </label>
               
               <button 
@@ -180,7 +180,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
                 className={`p-2 rounded-full transition-colors group relative ${useSearch ? 'bg-blue-600/20 text-blue-400' : 'hover:bg-[#282a2c] text-[#c4c7c5]'}`}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#282a2c] text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">Search Grounding</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#282a2c] text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">Live Search</span>
               </button>
 
               <select 
@@ -207,7 +207,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
                   handleSendMessage();
                 }
               }}
-              placeholder="Ask Shweta GPT anything..."
+              placeholder="Message Shweta GPT..."
               className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-2 text-[#e3e3e3] placeholder-[#8e918f] text-base"
             />
 
@@ -225,7 +225,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
           </div>
         </div>
         <p className="text-[11px] text-[#8e918f] text-center mt-3">
-          Shweta GPT can make mistakes. Verify important information.
+          Shweta GPT can provide inaccurate info. Double-check important facts.
         </p>
       </div>
     </div>

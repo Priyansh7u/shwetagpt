@@ -10,7 +10,7 @@ const App: React.FC = () => {
 
   // Initialize with a default session if none exist
   useEffect(() => {
-    const saved = localStorage.getItem('gemini_clone_sessions');
+    const saved = localStorage.getItem('shwetagpt_sessions_v1');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -30,7 +30,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (sessions.length > 0) {
-      localStorage.setItem('gemini_clone_sessions', JSON.stringify(sessions));
+      localStorage.setItem('shwetagpt_sessions_v1', JSON.stringify(sessions));
     }
   }, [sessions]);
 
@@ -38,7 +38,7 @@ const App: React.FC = () => {
     const newId = Date.now().toString();
     const newSession: ChatSession = {
       id: newId,
-      title: 'New Chat',
+      title: 'New Conversation',
       messages: [],
       createdAt: Date.now()
     };
@@ -98,14 +98,14 @@ const App: React.FC = () => {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
               </button>
             )}
-            <h1 className="text-xl font-medium text-[#c4c7c5]">ShwetaGPT</h1>
+            <h1 className="text-xl font-medium text-[#c4c7c5]">Shweta GPT</h1>
           </div>
           
           <div className="flex items-center gap-3">
-             <div className="bg-[#1e1f20] px-3 py-1.5 rounded-full text-xs font-medium text-[#c4c7c5] border border-[#444746]">
-               Advanced
+             <div className="bg-[#1e1f20] px-3 py-1.5 rounded-full text-xs font-medium text-[#448aff] border border-[#2c3e50]">
+               Pro v3.0
              </div>
-             <img src="https://picsum.photos/seed/user123/32/32" className="w-8 h-8 rounded-full border border-[#444746]" alt="Profile" />
+             <img src="https://picsum.photos/seed/shweta/32/32" className="w-8 h-8 rounded-full border border-[#444746]" alt="User" />
           </div>
         </header>
 
@@ -116,7 +116,7 @@ const App: React.FC = () => {
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-[#444746]">
-            Select or start a new conversation
+            Select or start a new conversation with Shweta GPT
           </div>
         )}
       </main>

@@ -7,14 +7,20 @@ import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../ty
  */
 const getApiKey = () => process.env.API_KEY;
 
-const SYSTEM_INSTRUCTION = `You are ShwetaGPT, a highly intelligent, versatile, and friendly AI assistant. 
-Your goal is to provide accurate, concise, and helpful information. 
-- Be professional yet approachable.
-- If asked for code, provide clean, modern, and documented snippets.
-- When generating images, be creative and descriptive.
-- Always use Markdown for structure (bolding, lists, code blocks).
-- If you don't know something, be honest.
-- Avoid being overly repetitive or lecturing the user.`;
+const SYSTEM_INSTRUCTION = `You are Shweta GPT, a brilliant and natural AI assistant. 
+Your goal is to be the ultimate companion for the user.
+
+RULES FOR PERSONALITY:
+- BE DIRECT: Skip the fluff. No "Certainly!", "Sure thing!", or "As an AI model...". 
+- BE CONCISE: Only provide long answers if the topic is complex. Use bullet points for clarity.
+- BE HUMAN: Use a friendly, natural tone. Don't sound like a textbook.
+- NO LECTURING: Don't tell the user what they should or shouldn't do unless asked for advice.
+- BRANDING: You are Shweta GPT. Never refer to yourself as Gemini or a Google model.
+
+TECHNICAL SKILLS:
+- Code: Provide clean, production-ready snippets with minimal comments.
+- Images: When asked to 'draw' or 'generate', describe the visual in detail while creating it.
+- Search: When using search, synthesize the results into a cohesive story rather than just listing facts.`;
 
 export const generateResponse = async (
   prompt: string,
@@ -50,7 +56,7 @@ export const generateResponse = async (
   });
 
   const config: any = {
-    temperature: 0.8,
+    temperature: 0.9, // Increased slightly for more "natural" non-robotic flow
     topP: 0.95,
     topK: 40,
     systemInstruction: SYSTEM_INSTRUCTION,
@@ -85,7 +91,7 @@ export const generateResponse = async (
       imageUrl: undefined 
     };
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
+    console.error("Shweta GPT Error:", error);
     throw error;
   }
 };
@@ -100,7 +106,7 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: ModelType.IMAGE,
       contents: {
-        parts: [{ text: `Generate a high-quality, professional image based on this request: ${prompt}` }]
+        parts: [{ text: `Generate a stunning, artistic image based on this: ${prompt}` }]
       },
       config: {
         imageConfig: {
@@ -122,12 +128,12 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
     }
 
     return { 
-      text: text || "Here is the image I generated for you:", 
+      text: text || "Created this for you:", 
       imageUrl,
       groundingSources: [] 
     };
   } catch (error) {
-    console.error("Image Generation Error:", error);
+    console.error("Image Gen Error:", error);
     throw error;
   }
 };
@@ -145,14 +151,14 @@ export const analyzeImage = async (imageB64: string, prompt: string): Promise<st
       contents: {
         parts: [
           { inlineData: { data: base64Data, mimeType: 'image/png' } },
-          { text: prompt || "Please look at this image and describe it with insight and detail." }
+          { text: prompt || "What's happening in this image?" }
         ]
       },
       config: {
         systemInstruction: SYSTEM_INSTRUCTION
       }
     });
-    return response.text || "Unable to analyze the image.";
+    return response.text || "I can't quite see what's in that image.";
   } catch (error) {
     console.error("Analysis Error:", error);
     throw error;
