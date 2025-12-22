@@ -207,7 +207,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
                   handleSendMessage();
                 }
               }}
-              placeholder="Ask Gemini anything..."
+              placeholder="Ask Shweta GPT anything..."
               className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-2 text-[#e3e3e3] placeholder-[#8e918f] text-base"
             />
 
@@ -225,7 +225,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
           </div>
         </div>
         <p className="text-[11px] text-[#8e918f] text-center mt-3">
-          Gemini can make mistakes. Verify important information.
+          Shweta GPT can make mistakes. Verify important information.
         </p>
       </div>
     </div>
