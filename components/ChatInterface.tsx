@@ -69,10 +69,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
       updateMessages([...newMessages, assistantMessage]);
     } catch (err: any) {
       console.error(err);
-      let errorText = "An error occurred while connecting to Gemini. Please check your environment configuration.";
+      let errorText = "An error occurred while connecting to Gemini. Please check your connection.";
       
       if (err.message === "API_KEY_MISSING") {
-        errorText = "Missing Gemini API Key. Please add 'API_KEY' to your Vercel project environment variables.";
+        errorText = "Gemini API Key not found in this build. \n\n1. Go to Vercel Settings > Environment Variables and ensure 'API_KEY' is added. \n2. IMPORTANT: You must click 'Redeploy' on your latest Vercel deployment to apply new variables to the frontend.";
       }
 
       const errorMessage: Message = {
