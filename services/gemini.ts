@@ -1,26 +1,20 @@
 
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../types";
 
 /**
- * Strictly utilizes process.env.API_KEY as injected by the build system.
+ * Strictly utilizes process.env.API_KEY as defined in the environment.
  */
 const getApiKey = () => process.env.API_KEY;
 
-const SYSTEM_INSTRUCTION = `You are Shweta GPT, a brilliant and natural AI assistant. 
-Your goal is to be the ultimate companion for the user.
+const SYSTEM_INSTRUCTION = `You are Shweta GPT, a world-class AI assistant powered by Gemini.
 
-RULES FOR PERSONALITY:
-- BE DIRECT: Skip the fluff. No "Certainly!", "Sure thing!", or "As an AI model...". 
-- BE CONCISE: Only provide long answers if the topic is complex. Use bullet points for clarity.
-- BE HUMAN: Use a friendly, natural tone. Don't sound like a textbook.
-- NO LECTURING: Don't tell the user what they should or shouldn't do unless asked for advice.
-- BRANDING: You are Shweta GPT. Never refer to yourself as Gemini or a Google model.
-
-TECHNICAL SKILLS:
-- Code: Provide clean, production-ready snippets with minimal comments.
-- Images: When asked to 'draw' or 'generate', describe the visual in detail while creating it.
-- Search: When using search, synthesize the results into a cohesive story rather than just listing facts.`;
+CORE DIRECTIVES:
+- NO FLUFF: Start your response immediately with the answer. Avoid "Sure," "I can help with that," etc.
+- BRANDING: You are Shweta GPT.
+- FORMATTING: Use Markdown strictly. Use tables for data, bolding for emphasis, and syntax-highlighted code blocks.
+- TONAL QUALITY: Highly intelligent, helpful, and concise. 
+- GOOGLE SEARCH: If you have access to Google Search tools, use them to provide up-to-date information.`;
 
 export const generateResponse = async (
   prompt: string,
@@ -33,37 +27,43 @@ export const generateResponse = async (
   
   const ai = new GoogleGenAI({ apiKey });
 
+  // If the prompt looks like an image generation request, route to image model
   const lowercasePrompt = prompt.toLowerCase();
-  if (lowercasePrompt.startsWith("generate an image") || lowercasePrompt.startsWith("create an image") || lowercasePrompt.startsWith("draw")) {
+  const isImageRequest = lowercasePrompt.includes("generate") || 
+                         lowercasePrompt.includes("create") || 
+                         lowercasePrompt.includes("draw") || 
+                         lowercasePrompt.includes("image of");
+
+  if (isImageRequest && model === ModelType.FLASH) {
     return await generateImage(prompt);
   }
 
+  // Build contents from history. 
+  // IMPORTANT: History passed in already includes the current user prompt.
   const contents = history.map(msg => ({
     role: msg.role === Role.USER ? "user" : "model",
     parts: msg.parts.map(p => {
-      if (p.text) return { text: p.text };
       if (p.image) {
         const base64Data = p.image.includes(',') ? p.image.split(',')[1] : p.image;
         return { inlineData: { data: base64Data, mimeType: 'image/png' } };
       }
-      return { text: "" };
+      return { text: p.text || "" };
     })
   }));
 
-  contents.push({
-    role: "user",
-    parts: [{ text: prompt }]
-  });
-
   const config: any = {
-    temperature: 0.9, // Increased slightly for more "natural" non-robotic flow
-    topP: 0.95,
-    topK: 40,
     systemInstruction: SYSTEM_INSTRUCTION,
+    temperature: 0.9,
   };
 
+  // Enable Search Grounding if requested
   if (useSearch) {
     config.tools = [{ googleSearch: {} }];
+  }
+
+  // Use thinking budget for PRO model to improve reasoning
+  if (model === ModelType.PRO) {
+    config.thinkingConfig = { thinkingBudget: 4000 };
   }
 
   try {
@@ -75,6 +75,7 @@ export const generateResponse = async (
 
     const text = response.text || "";
     
+    // Extract Search Grounding sources
     const groundingSources: GroundingSource[] = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => {
       if (chunk.web) {
         return {
@@ -91,7 +92,10 @@ export const generateResponse = async (
       imageUrl: undefined 
     };
   } catch (error: any) {
-    console.error("Shweta GPT Error:", error);
+    console.error("Gemini API Error:", error);
+    // Re-throw specific errors for better UI handling
+    if (error.message?.includes("404")) throw new Error("MODEL_NOT_FOUND");
+    if (error.message?.includes("429")) throw new Error("RATE_LIMIT_EXCEEDED");
     throw error;
   }
 };
@@ -106,7 +110,7 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: ModelType.IMAGE,
       contents: {
-        parts: [{ text: `Generate a stunning, artistic image based on this: ${prompt}` }]
+        parts: [{ text: prompt }]
       },
       config: {
         imageConfig: {
@@ -128,7 +132,7 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
     }
 
     return { 
-      text: text || "Created this for you:", 
+      text: text || "Here is the image you requested:", 
       imageUrl,
       groundingSources: [] 
     };
@@ -151,16 +155,16 @@ export const analyzeImage = async (imageB64: string, prompt: string): Promise<st
       contents: {
         parts: [
           { inlineData: { data: base64Data, mimeType: 'image/png' } },
-          { text: prompt || "What's happening in this image?" }
+          { text: prompt || "Analyze this image in detail." }
         ]
       },
       config: {
         systemInstruction: SYSTEM_INSTRUCTION
       }
     });
-    return response.text || "I can't quite see what's in that image.";
+    return response.text || "I was unable to analyze this image.";
   } catch (error) {
-    console.error("Analysis Error:", error);
+    console.error("Vision Error:", error);
     throw error;
   }
 };
