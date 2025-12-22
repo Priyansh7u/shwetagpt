@@ -49,7 +49,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
     try {
       let aiResponse: GeminiResponse;
       if (currentImg && !currentInput) {
-        const analysis = await analyzeImage(currentImg, "What is in this image?");
+        const analysis = await analyzeImage(currentImg, "Describe this image.");
         aiResponse = { text: analysis, groundingSources: [], imageUrl: undefined };
       } else {
         aiResponse = await generateResponse(currentInput, newMessages, selectedModel, useSearch);
@@ -69,10 +69,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
       updateMessages([...newMessages, assistantMessage]);
     } catch (err: any) {
       console.error(err);
-      let errorText = "Sorry, I encountered an error. Please try again later.";
+      let errorText = "An error occurred while connecting to Gemini. Please check your environment configuration.";
       
       if (err.message === "API_KEY_MISSING") {
-        errorText = "API Key is missing. Please ensure you have set the API_KEY environment variable in your Vercel project settings.";
+        errorText = "Missing Gemini API Key. Please add 'API_KEY' to your Vercel project environment variables.";
       }
 
       const errorMessage: Message = {
@@ -114,14 +114,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
         {session.messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center space-y-8 mt-20">
             <h2 className="text-4xl md:text-5xl font-medium bg-gradient-to-r from-blue-400 via-purple-500 to-red-400 bg-clip-text text-transparent text-center">
-              Hello, how can I help you today?
+              Gemini Hackathon Project
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-5xl">
               {[
-                { title: "Explain code", desc: "Show me how to use React Hooks", icon: "💻" },
-                { title: "Create image", desc: "A futuristic city in space", icon: "🎨" },
-                { title: "Summarize", desc: "Summarize this long text", icon: "📝" },
-                { title: "Plan a trip", desc: "Top 5 places in Tokyo", icon: "✈️" }
+                { title: "Debug Code", desc: "Help me find the bug in this React component", icon: "💻" },
+                { title: "Generate Image", desc: "Create an image of a neon cyberpunk city", icon: "🎨" },
+                { title: "Analyze Docs", desc: "Summarize the key points of this documentation", icon: "📚" },
+                { title: "Logic Puzzle", desc: "Solve this complex reasoning problem", icon: "🧩" }
               ].map((card, i) => (
                 <button 
                   key={i}
@@ -146,7 +146,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
             <div className="space-y-2 flex-1 max-w-[80%]">
               <div className="h-4 bg-[#282a2c] rounded w-[90%]" />
               <div className="h-4 bg-[#282a2c] rounded w-[70%]" />
-              <div className="h-4 bg-[#282a2c] rounded w-[80%]" />
             </div>
           </div>
         )}
@@ -173,7 +172,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
               <label className="cursor-pointer p-2 hover:bg-[#282a2c] rounded-full transition-colors group relative">
                 <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#c4c7c5]"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4m4-5l5 5 5-5m-5 5V3"/></svg>
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#282a2c] text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">Add image</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#282a2c] text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">Upload Image</span>
               </label>
               
               <button 
@@ -208,7 +207,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
                   handleSendMessage();
                 }
               }}
-              placeholder="Enter a prompt here"
+              placeholder="Ask Gemini anything..."
               className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-2 text-[#e3e3e3] placeholder-[#8e918f] text-base"
             />
 
@@ -226,7 +225,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, updateMessages }
           </div>
         </div>
         <p className="text-[11px] text-[#8e918f] text-center mt-3">
-          ShwetaGPT may display inaccurate info, including about people, so double-check its responses. Your privacy & ShwetaGPT Apps
+          Gemini can make mistakes. Verify important information.
         </p>
       </div>
     </div>

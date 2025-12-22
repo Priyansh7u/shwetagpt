@@ -1,6 +1,10 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../types";
 
+/**
+ * Strictly utilizes process.env.API_KEY as injected by the build system.
+ * This ensures keys are never hardcoded and remain secure in public deployments.
+ */
 const getApiKey = () => process.env.API_KEY;
 
 export const generateResponse = async (
@@ -10,19 +14,17 @@ export const generateResponse = async (
   useSearch: boolean = false
 ): Promise<GeminiResponse> => {
   const apiKey = getApiKey();
-  if (!apiKey) {
-    throw new Error("API_KEY_MISSING");
-  }
+  if (!apiKey) throw new Error("API_KEY_MISSING");
   
   const ai = new GoogleGenAI({ apiKey });
 
-  // Handle implicit image generation requests
+  // Intelligent redirection for image generation requests
   const lowercasePrompt = prompt.toLowerCase();
   if (lowercasePrompt.includes("generate an image of") || lowercasePrompt.includes("create an image")) {
     return await generateImage(prompt);
   }
 
-  // Format history for the API
+  // Map application history to Gemini SDK format
   const contents = history.map(msg => ({
     role: msg.role === Role.USER ? "user" : "model",
     parts: msg.parts.map(p => {
@@ -35,7 +37,7 @@ export const generateResponse = async (
     })
   }));
 
-  // Add the current prompt
+  // Append current prompt
   contents.push({
     role: "user",
     parts: [{ text: prompt }]
@@ -74,7 +76,7 @@ export const generateResponse = async (
       imageUrl: undefined 
     };
   } catch (error: any) {
-    console.error("Gemini API Error Detail:", error);
+    console.error("Gemini API Error:", error);
     throw error;
   }
 };
@@ -111,7 +113,7 @@ export const generateImage = async (prompt: string): Promise<GeminiResponse> => 
     }
 
     return { 
-      text: text || "Here is your generated image:", 
+      text: text || "Image successfully generated:", 
       imageUrl,
       groundingSources: [] 
     };
@@ -134,11 +136,11 @@ export const analyzeImage = async (imageB64: string, prompt: string): Promise<st
       contents: {
         parts: [
           { inlineData: { data: base64Data, mimeType: 'image/png' } },
-          { text: prompt || "What is in this image?" }
+          { text: prompt || "Analyze this image in detail." }
         ]
       }
     });
-    return response.text || "I couldn't analyze the image.";
+    return response.text || "Unable to analyze the image.";
   } catch (error) {
     console.error("Analysis Error:", error);
     throw error;
