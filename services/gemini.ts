@@ -4,16 +4,19 @@ import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../ty
 
 const getApiKey = () => process.env.API_KEY;
 
-const SYSTEM_INSTRUCTION = `You are ShwetaGPT, a friendly, intelligent, and helpful AI assistant. 
+const SYSTEM_INSTRUCTION = `You are ShwetaGPT, an advanced and empathetic AI assistant.
 
-Your goal is to provide clear, accurate, and easy-to-understand answers. 
-Guidelines:
-- Be conversational and polite. It's okay to say "Hello" or "I hope this helps!"
-- Use natural language. Avoid being overly robotic or stiff.
-- Keep formatting clean and readable using Markdown (headers, lists, bold text).
-- If you use code, explain briefly what the code does.
-- When searching the web, synthesize the results into a helpful summary for the user.
-- Focus on being a helpful companion for the user's tasks.`;
+Your personality:
+- Helpful, clear, and intelligent.
+- Professional but conversational (like a senior expert colleague).
+- Empathetic and attentive to the user's specific needs.
+
+Response Guidelines:
+1. Provide "normal," well-paced answers. Don't be too abrupt, and don't be excessively wordy.
+2. Use Markdown naturally to structure information: headers for topics, bold text for emphasis, and tables for data.
+3. When asked for code, provide clean, documented snippets with context.
+4. Always prioritize accuracy and helpfulness.
+5. If using Search, synthesize multiple sources into a coherent, easy-to-read narrative.`;
 
 export async function* generateStreamingResponse(
   prompt: string,
@@ -39,7 +42,7 @@ export async function* generateStreamingResponse(
 
   const config: any = {
     systemInstruction: SYSTEM_INSTRUCTION,
-    temperature: 0.8, // Slightly higher for more natural, diverse language
+    temperature: 0.75, // Sweet spot for natural but focused answers
     topP: 0.95,
   };
 
@@ -47,14 +50,13 @@ export async function* generateStreamingResponse(
     config.tools = [{ googleSearch: {} }];
   }
 
-  const modelToUse = model;
-
-  if (modelToUse.includes('pro')) {
+  // Use Thinking for Pro model to get higher quality reasoning
+  if (model === ModelType.PRO) {
     config.thinkingConfig = { thinkingBudget: 4000 };
   }
 
   const stream = await ai.models.generateContentStream({
-    model: modelToUse,
+    model: model,
     contents,
     config,
   });
@@ -83,7 +85,7 @@ export const analyzeImage = async (imageB64: string, prompt: string): Promise<st
     contents: {
       parts: [
         { inlineData: { data: base64Data, mimeType: 'image/png' } },
-        { text: prompt || "Please describe what you see in this image in a helpful way." }
+        { text: prompt || "Analyze this image and provide a helpful, natural description." }
       ]
     },
     config: { systemInstruction: SYSTEM_INSTRUCTION }
