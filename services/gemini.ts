@@ -4,15 +4,16 @@ import { ModelType, Message, Role, GeminiResponse, GroundingSource } from "../ty
 
 const getApiKey = () => process.env.API_KEY;
 
-const SYSTEM_INSTRUCTION = `You are Shweta GPT, a world-class AI assistant. 
-Your goal is to provide the most accurate, concise, and helpful response possible.
+const SYSTEM_INSTRUCTION = `You are ShwetaGPT, a friendly, intelligent, and helpful AI assistant. 
 
-STRICT PROTOCOLS:
-- NO CONVERSATIONAL FILLER: Do not say "Certainly!", "I can help with that", or "Sure thing". Start with the answer.
-- EXPERT FORMATTING: Use Markdown tables, bold headers, and clean lists.
-- CODE: Always provide language identifiers for code blocks.
-- PERSONALITY: Intelligent, precise, and direct. You are a tool, not a chatterbox.
-- GROUNDING: When using Google Search tools, synthesize information into a coherent narrative.`;
+Your goal is to provide clear, accurate, and easy-to-understand answers. 
+Guidelines:
+- Be conversational and polite. It's okay to say "Hello" or "I hope this helps!"
+- Use natural language. Avoid being overly robotic or stiff.
+- Keep formatting clean and readable using Markdown (headers, lists, bold text).
+- If you use code, explain briefly what the code does.
+- When searching the web, synthesize the results into a helpful summary for the user.
+- Focus on being a helpful companion for the user's tasks.`;
 
 export async function* generateStreamingResponse(
   prompt: string,
@@ -38,7 +39,7 @@ export async function* generateStreamingResponse(
 
   const config: any = {
     systemInstruction: SYSTEM_INSTRUCTION,
-    temperature: 0.7,
+    temperature: 0.8, // Slightly higher for more natural, diverse language
     topP: 0.95,
   };
 
@@ -46,12 +47,14 @@ export async function* generateStreamingResponse(
     config.tools = [{ googleSearch: {} }];
   }
 
-  if (model === ModelType.PRO) {
+  const modelToUse = model;
+
+  if (modelToUse.includes('pro')) {
     config.thinkingConfig = { thinkingBudget: 4000 };
   }
 
   const stream = await ai.models.generateContentStream({
-    model: model,
+    model: modelToUse,
     contents,
     config,
   });
@@ -80,7 +83,7 @@ export const analyzeImage = async (imageB64: string, prompt: string): Promise<st
     contents: {
       parts: [
         { inlineData: { data: base64Data, mimeType: 'image/png' } },
-        { text: prompt || "Analyze this image concisely." }
+        { text: prompt || "Please describe what you see in this image in a helpful way." }
       ]
     },
     config: { systemInstruction: SYSTEM_INSTRUCTION }

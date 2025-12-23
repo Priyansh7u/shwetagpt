@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
@@ -8,7 +9,6 @@ const App: React.FC = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // Initialize with a default session if none exist
   useEffect(() => {
     const saved = localStorage.getItem('shwetagpt_sessions_v1');
     if (saved) {
@@ -38,7 +38,7 @@ const App: React.FC = () => {
     const newId = Date.now().toString();
     const newSession: ChatSession = {
       id: newId,
-      title: 'New Conversation',
+      title: 'Initial Query',
       messages: [],
       createdAt: Date.now()
     };
@@ -64,8 +64,8 @@ const App: React.FC = () => {
       if (s.id === sessionId) {
         let newTitle = s.title;
         if (s.messages.length === 0 && messages.length > 0) {
-          const firstMsg = messages[0].parts.find(p => p.text)?.text || 'New Chat';
-          newTitle = firstMsg.slice(0, 30) + (firstMsg.length > 30 ? '...' : '');
+          const firstMsg = messages[0].parts.find(p => p.text)?.text || 'New Analysis';
+          newTitle = firstMsg.slice(0, 35) + (firstMsg.length > 35 ? '...' : '');
         }
         return { ...s, messages, title: newTitle };
       }
@@ -88,24 +88,28 @@ const App: React.FC = () => {
       />
       
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="flex items-center justify-between p-4 bg-[#131314] h-16 shrink-0 border-b border-[#282a2c]">
-          <div className="flex items-center gap-4">
+        <header className="flex items-center justify-between px-8 bg-[#131314] h-20 shrink-0 border-b border-[#282a2c]/50">
+          <div className="flex items-center gap-6">
             {!isSidebarOpen && (
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 hover:bg-[#282a2c] rounded-full transition-colors"
+                className="p-3 hover:bg-[#282a2c] rounded-2xl transition-all active:scale-95"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
               </button>
             )}
-            <h1 className="text-xl font-medium text-[#c4c7c5]">Shweta GPT</h1>
+            <div className="flex flex-col">
+              <h1 className="text-lg font-bold text-white tracking-tight">ShwetaGPT</h1>
+              <span className="text-[10px] text-[#4285f4] font-black uppercase tracking-[0.2em]">Titan Model v3</span>
+            </div>
           </div>
           
-          <div className="flex items-center gap-3">
-             <div className="bg-[#1e1f20] px-3 py-1.5 rounded-full text-xs font-medium text-[#448aff] border border-[#2c3e50]">
-               Pro v3.0
+          <div className="flex items-center gap-5">
+             <div className="hidden md:flex bg-[#1e1f20] px-4 py-2 rounded-2xl text-[10px] font-black text-[#8e918f] border border-[#333537] items-center gap-2 uppercase tracking-wider">
+               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+               Operational
              </div>
-             <img src="https://picsum.photos/seed/shweta/32/32" className="w-8 h-8 rounded-full border border-[#444746]" alt="User" />
+             <img src={`https://api.dicebear.com/7.x/shapes/svg?seed=user`} className="w-10 h-10 rounded-2xl border border-[#333537] p-1 shadow-lg" alt="Profile" />
           </div>
         </header>
 
@@ -115,8 +119,9 @@ const App: React.FC = () => {
             updateMessages={(msgs) => updateSessionMessages(currentSession.id, msgs)}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center text-[#444746]">
-            Select or start a new conversation with Shweta GPT
+          <div className="flex-1 flex flex-col items-center justify-center text-[#444746] animate-pulse">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="mb-4"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+            <p className="text-sm uppercase tracking-[0.5em] font-bold">Select Interface</p>
           </div>
         )}
       </main>
